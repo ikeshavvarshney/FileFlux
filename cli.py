@@ -7,8 +7,7 @@ SUGGEST={"image/jpeg":"View image","image/png":"View image","application/pdf":"P
          "application/zip":"Unzip","text/plain":"Text editor"}
 
 def load_db(): 
-    if os.path.exists(DB): return json.load(open(DB))
-    return {}
+    return json.load(open(DB)) if os.path.exists(DB) else {}
 def save_db(d): json.dump(d, open(DB,"w"))
 def human_size(n): 
     for u in ["B","KB","MB","GB"]: 
@@ -35,14 +34,17 @@ def rename(src,dst): os.rename(src,dst); print(f"✏️ Renamed {src}→{dst}")
 def main():
     p=argparse.ArgumentParser(prog="fileflux")
     sub=p.add_subparsers(dest="cmd")
-    sub.add_parser("info").add_argument("file")
-    sub.add_parser("copy").add_argument("src"); sub.add_parser("copy").add_argument("dst")
-    sub.add_parser("cut").add_argument("src"); sub.add_parser("cut").add_argument("dst")
-    sub.add_parser("delete").add_argument("path")
-    sub.add_parser("mkdir").add_argument("path")
-    sub.add_parser("rename").add_argument("src"); sub.add_parser("rename").add_argument("dst")
-    sub.add_parser("save").add_argument("alias"); sub.add_parser("save").add_argument("path")
-    sub.add_parser("jump").add_argument("alias")
+
+    # Correct subparsers
+    info_parser = sub.add_parser("info"); info_parser.add_argument("file")
+    copy_parser = sub.add_parser("copy"); copy_parser.add_argument("src"); copy_parser.add_argument("dst")
+    cut_parser = sub.add_parser("cut"); cut_parser.add_argument("src"); cut_parser.add_argument("dst")
+    delete_parser = sub.add_parser("delete"); delete_parser.add_argument("path")
+    mkdir_parser = sub.add_parser("mkdir"); mkdir_parser.add_argument("path")
+    rename_parser = sub.add_parser("rename"); rename_parser.add_argument("src"); rename_parser.add_argument("dst")
+    save_parser = sub.add_parser("save"); save_parser.add_argument("alias"); save_parser.add_argument("path")
+    jump_parser = sub.add_parser("jump"); jump_parser.add_argument("alias")
+
     args=p.parse_args(); db=load_db()
 
     if args.cmd=="info": print(detect(args.file))
