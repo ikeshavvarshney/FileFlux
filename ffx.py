@@ -6,8 +6,7 @@ VERSION = "1.0"
 AUTHOR = "Keshav Varshney"
 REPO = "https://github.com/ikeshavvarshney/FileFlux"
 HOME, DB = os.path.expanduser("~"), os.path.join(os.path.expanduser("~"), ".fileflux.json")
-SUGGEST = {"image/jpeg":"View image","image/png":"View image","application/pdf":"PDF reader",
-           "application/zip":"Unzip","text/plain":"Text editor"}
+SUGGEST={"image/jpeg":"View image","image/png":"View image","image/gif":"View image","image/svg+xml":"Vector editor","video/mp4":"Media player","audio/mpeg":"Music player","application/pdf":"PDF reader","application/zip":"Unzip","application/x-tar":"Extract archive","application/gzip":"Extract archive","text/plain":"Text editor","text/markdown":"Markdown editor","text/x-python":"Python IDE","text/x-c":"C compiler","text/x-c++":"C++ compiler","text/x-java-source":"Java IDE","application/javascript":"Node.js / Browser","application/json":"JSON viewer","text/html":"Web browser","text/css":"CSS editor","application/xml":"XML editor","application/sql":"SQL client","application/x-yaml":"YAML config","application/vnd.ms-excel":"Excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":"Excel","application/vnd.openxmlformats-officedocument.wordprocessingml.document":"Word","application/vnd.openxmlformats-officedocument.presentationml.presentation":"PowerPoint","application/x-sh":"Shell script","application/x-bash":"Bash script","application/x-powershell":"PowerShell","application/x-msdownload":"Windows executable","application/x-dosexec":"Windows executable","application/octet-stream":"Binary file","application/x-executable":"Executable","inode/directory":"Directory browser"}
 
 def load_db(): return json.load(open(DB)) if os.path.exists(DB) else {}
 def save_db(d): json.dump(d, open(DB,"w"))
@@ -106,7 +105,7 @@ def main():
               "• Save and jump to frequently used paths.\n"
               "• Search text inside files with searchtext.\n"
               "• Find files by name with searchfile.\n"
-              f"• Author: {AUTHOR}\n• Version: {VERSION}\n• Repo: {Fore.CYAN}{REPO}{Style.RESET_ALL}\n")
+              f"• {Fore.GREEN}Author{Style.RESET_ALL}: {Fore.CYAN}{AUTHOR}{Style.RESET_ALL}\n• {Fore.GREEN}Version{Style.RESET_ALL}: {Fore.BLUE}{VERSION}{Style.RESET_ALL}\n• {Fore.GREEN}Repo{Style.RESET_ALL}: {Fore.CYAN}{REPO}{Style.RESET_ALL}\n")
         parser.print_help()
         return
 
