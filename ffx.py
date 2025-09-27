@@ -66,13 +66,12 @@ def searchfile(path, pattern, exclude=[]):
 
 def show_logo():
     logo = f"""
-{Fore.CYAN}███████╗██╗ ██████╗██╗ ██████╗██╗     ██╗██╗  ██╗{Style.RESET_ALL}
-{Fore.YELLOW}██╔════╝██║██╔════╝██║██╔════╝██║     ██║╚██╗██╔╝{Style.RESET_ALL}
-{Fore.MAGENTA}█████╗  ██║██║     ██║██║     ██║     ██║ ╚███╔╝{Style.RESET_ALL}
-{Fore.GREEN}██╔══╝  ██║██║     ██║██║     ██║     ██║ ██╔██╗{Style.RESET_ALL}
-{Fore.CYAN}██║     ██║╚██████╗██║╚██████╗███████╗██║██╔╝ ██╗{Style.RESET_ALL}
-{Fore.YELLOW}╚═╝     ╚═╝ ╚═════╝╚═╝ ╚═════╝╚══════╝╚═╝╚═╝  ╚═╝{Style.RESET_ALL}
-{Fore.MAGENTA}Author: Keshav Varshney | Version: 1.0{Style.RESET_ALL}
+{Fore.CYAN}██████╗██╗██╗     ██████╗██████╗██╗    ██╗   ██╗██╗  ██╗{Style.RESET_ALL}
+{Fore.YELLOW}██╔═══╝██║██║     ██╔═══╝██╔═══╝██║    ██║   ██║╚██╗██╔╝{Style.RESET_ALL}
+{Fore.MAGENTA}████╗  ██║██║     ████╗  ████╗  ██║    ██║   ██║ ╚███╔╝{Style.RESET_ALL}
+{Fore.GREEN}██╔═╝  ██║██║     ██╔═╝  ██╔═╝  ██║    ██║   ██║ ██╔██╗{Style.RESET_ALL}
+{Fore.CYAN}██║    ██║██████╗ ██████╗██║    ██████╗╚██████╔╝██╔╝ ██╗{Style.RESET_ALL}
+{Fore.YELLOW}╚═╝    ╚═╝╚═════╝ ╚═════╝╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═╝{Style.RESET_ALL}
 {Fore.CYAN}Repo: https://github.com/ikeshavvarshney/FileFlux{Style.RESET_ALL}
 """
     print(logo)
