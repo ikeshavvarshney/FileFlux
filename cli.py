@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 import argparse, os, mimetypes, subprocess
 
+# Suggestions for common file types
 SUGGEST = {
     "image/jpeg": "Open with any image viewer",
     "image/png": "Open with any image viewer",
@@ -17,6 +19,8 @@ def human_size(n):
 def analyze(path, details=False):
     if not os.path.exists(path):
         return f"❌ File not found: {path}"
+    if os.path.isdir(path):
+        return f"📁 {path} is a directory"
     size = os.path.getsize(path)
     mime, _ = mimetypes.guess_type(path)
     mime = mime or "application/octet-stream"
@@ -27,7 +31,6 @@ def analyze(path, details=False):
         f"— Suggestion: {SUGGEST.get(mime,'No suggestion available')}"
     ]
     if details:
-        # Optional: fallback to system 'file' command if available
         try:
             out = subprocess.check_output(["file","-b",path], text=True)
             info.append(f"— Details: {out.strip()}")
@@ -37,7 +40,11 @@ def analyze(path, details=False):
 
 def main():
     p = argparse.ArgumentParser(prog="wtfisthis", description="Universal File Detective")
-    p.add_argument("file", help="File path to analyze")
+    p.add_argument("files", nargs="+", help="File(s) to analyze")
     p.add_argument("--details", action="store_true", help="Show extra info using system 'file'")
     args = p.parse_args()
-    print(analyze(args.file, args.details))
+    for f in args.files:
+        print(analyze(f, args.details))
+
+if __name__ == "__main__":
+    main()
