@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 import os,sys,shutil,json,mimetypes,argparse,subprocess,zipfile;from colorama import Fore,Style,init;init(autoreset=True)
-VERSION="1.2";AUTHOR="Keshav Varshney";REPO="https://github.com/ikeshavvarshney/FileFlux"
+
+# metadata
+VERSION="1.3";AUTHOR="Keshav Varshney";REPO="https://github.com/ikeshavvarshney/FileFlux"
+
 HOME,DB=os.path.expanduser("~"),os.path.join(os.path.expanduser("~"),".fileflux.json")
 SUGGEST={"image/jpeg":"View image","image/png":"View image","image/gif":"View image","image/svg+xml":"Vector editor","video/mp4":"Media player","audio/mpeg":"Music player","application/pdf":"PDF reader","application/zip":"Unzip","application/x-tar":"Extract archive","application/gzip":"Extract archive","text/plain":"Text editor","text/markdown":"Markdown editor","text/x-python":"Python IDE","text/x-c":"C compiler","text/x-c++":"C++ compiler","text/x-java-source":"Java IDE","application/javascript":"Node.js / Browser","application/json":"JSON viewer","text/html":"Web browser","text/css":"CSS editor","application/xml":"XML editor","application/sql":"SQL client","application/x-yaml":"YAML config","application/vnd.ms-excel":"Excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":"Excel","application/vnd.openxmlformats-officedocument.wordprocessingml.document":"Word","application/vnd.openxmlformats-officedocument.presentationml.presentation":"PowerPoint","application/x-sh":"Shell script","application/x-bash":"Bash script","application/x-powershell":"PowerShell","application/x-msdownload":"Windows executable","application/x-dosexec":"Windows executable","application/octet-stream":"Binary file","application/x-executable":"Executable","inode/directory":"Directory browser"}
+
+# db
 def load_db(): 
     try:return json.load(open(DB)) if os.path.exists(DB) else {}
     except:return {}
 def save_db(d): json.dump(d,open(DB,"w"))
+# utils
 def human_size(n):
     for u in ["B","KB","MB","GB","TB"]:
         if n<1024:return f"{n:.1f} {u}"
         n/=1024
     return f"{n:.1f} PB"
-def free_space(path): return shutil.disk_usage(path).free # check free disk space
+def free_space(path): return shutil.disk_usage(path).free
 def detect(path):
     if not os.path.exists(path):return f"{Fore.RED}!! Not found !!{Style.RESET_ALL}"
     if os.path.isdir(path):return f"{Fore.BLUE}[DIR]{Style.RESET_ALL} {path}"
@@ -62,30 +68,30 @@ def convert(fmt,src,dst=None):
         open(dst,"w").write(out);print(f"[CONVERTED] {src} -> {dst}")
     except Exception as e:print(f"{Fore.RED}[ERROR]{Style.RESET_ALL} {e}")
 # archive/extract
-def archive(src,dst=None): # safe archive: avoids overwriting src if dst==src
+def archive(src,dst=None):
     try:
         abs_src=os.path.abspath(src)
-        if not dst: dst=os.path.splitext(abs_src)[0]+'.zip' # default dst
+        if not dst: dst=os.path.splitext(abs_src)[0]+'.zip'
         abs_dst=os.path.abspath(dst)
-        if abs_dst==abs_src: dst=abs_dst+'.zip'; abs_dst=os.path.abspath(dst) # avoid same-name overwrite
-        os.makedirs(os.path.dirname(abs_dst) or '.',exist_ok=True) # ensure dest dir exists
+        if abs_dst==abs_src: dst=abs_dst+'.zip'; abs_dst=os.path.abspath(dst) 
+        os.makedirs(os.path.dirname(abs_dst) or '.',exist_ok=True) 
         with zipfile.ZipFile(abs_dst,'w',zipfile.ZIP_DEFLATED) as z:
             if os.path.isdir(abs_src):
                 for root,_,files in os.walk(abs_src):
                     for f in files:
                         full=os.path.join(root,f)
-                        arc=os.path.relpath(full,start=os.path.dirname(abs_src)) # keep relative paths
+                        arc=os.path.relpath(full,start=os.path.dirname(abs_src)) 
                         z.write(full,arc)
             else:
                 z.write(abs_src,os.path.basename(abs_src))
         print(f"{Fore.GREEN}[ARCHIVED]{Style.RESET_ALL} {src} -> {dst}")
     except Exception as e:
         print(f"{Fore.RED}[ERROR]{Style.RESET_ALL} archiving failed: {e}")
-def extract(src,dst=None): # safe extract: default dir and avoid clobbering file paths
+def extract(src,dst=None): 
     try:
-        if dst is None: dst=os.path.splitext(src)[0] # default to filename without ext
+        if dst is None: dst=os.path.splitext(src)[0] 
         abs_dst=os.path.abspath(dst)
-        if os.path.exists(abs_dst) and os.path.isfile(abs_dst): abs_dst=abs_dst+'_extracted' # avoid writing into a file
+        if os.path.exists(abs_dst) and os.path.isfile(abs_dst): abs_dst=abs_dst+'_extracted'
         os.makedirs(abs_dst,exist_ok=True)
         with zipfile.ZipFile(src,'r') as z: z.extractall(abs_dst)
         print(f"{Fore.GREEN}[EXTRACTED]{Style.RESET_ALL} {src} -> {abs_dst}")
@@ -133,9 +139,39 @@ def pass_get(alias,db):
     ok=copy_to_clipboard(pwd)
     if ok:print(f"[CLIP] password for '{alias}' copied to clipboard")
     else:print(f"[WARN] could not copy to clipboard, use ffx pass {alias} to view")
+# fzf integration
+def interactive_fuzzy(start_path="."):
+    start_path=os.path.abspath(start_path)
+    items=[os.path.relpath(os.path.join(r,f),start_path) for r,_,fs in os.walk(start_path) for f in fs]
+    if not items: print("[NONE] no files found"); return
+    if shutil.which('fzf'):
+        try:
+            p=subprocess.Popen(['fzf','--ansi','--height=40%','--reverse','--border'],
+                               stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
+            out,_=p.communicate("\n".join(items)); sel=out.strip()
+            print(f"{Fore.GREEN}[SELECTED]{Style.RESET_ALL} {os.path.join(start_path,sel)}" if sel else "[CANCELLED]"); return
+        except: pass
+    # fallback interactive
+    cur, query = items, ""
+    while True:
+        os.system('cls' if os.name=='nt' else 'clear')
+        print(f"{Fore.CYAN}Path: {start_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Filter: {query}{Style.RESET_ALL} ({len(cur)} matches)\n")
+        for i,it in enumerate(cur[:20]): print(f"{Fore.GREEN}{i:2d}{Style.RESET_ALL} {it}")
+        if len(cur)>20: print(f"{Fore.YELLOW}... and {len(cur)-20} more{Style.RESET_ALL}")
+        try: inp=input(f"\n{Fore.CYAN}> {Style.RESET_ALL}").strip()
+        except: print(); return
+        if inp.lower()=='q': print("[CANCELLED]"); return
+        if inp.isdigit() and 0<=int(inp)<min(len(cur),20):
+            print(f"{Fore.GREEN}[SELECTED]{Style.RESET_ALL} {os.path.join(start_path,cur[int(inp)])}"); return
+        if inp=='': 
+            if len(cur)==1: print(f"{Fore.GREEN}[SELECTED]{Style.RESET_ALL} {os.path.join(start_path,cur[0])}"); return
+            query=""
+        else: query=inp
+        cur=[it for it in items if query.lower() in it.lower()] if query else items
 # banner
 def show_logo():
-    logo=f"\n{Fore.CYAN}██████╗██╗██╗     ██████╗██████╗██╗    ██╗   ██╗██╗  ██╗{Style.RESET_ALL}\n{Fore.YELLOW}██╔═══╝██║██║     ██╔═══╝██╔═══╝██║    ██║   ██║╚██╗██╔╝{Style.RESET_ALL}\n{Fore.MAGENTA}████╗  ██║██║     ████╗  ████╗  ██║    ██║   ██║ ╚███╔╝{Style.RESET_ALL}\n{Fore.GREEN}██╔═╝  ██║██║     ██╔═╝  ██╔═╝  ██║    ██║   ██║ ██╔██╗{Style.RESET_ALL}\n{Fore.CYAN}██║    ██║██████╗ ██████╗██║    ██████╗╚██████╔╝██╔╝ ██╗{Style.RESET_ALL}\n{Fore.YELLOW}╚═╝    ╚═╝╚═════╝ ╚═════╝╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═╝{Style.RESET_ALL}\n{Fore.CYAN}Repo: {REPO}{Style.RESET_ALL}\n"
+    logo=f"\n{Fore.CYAN}██████╗██╗██╗     ██████╗██████╗██╗    ██╗   ██╗██╗  ██╗{Style.RESET_ALL}\n{Fore.YELLOW}██╔═══╝██║██║     ██╔═══╝██╔═══╝██║    ██║   ██║╚██╗██╔╝{Style.RESET_ALL}\n{Fore.MAGENTA}████╗  ██║██║     ████╗  ████╗  ██║    ██║   ██║ ╚███╔╝{Style.RESET_ALL}\n{Fore.GREEN}██╔═╝  ██║██║     ██╔═╝  ██╔═╝  ██║    ██║   ██║ ██╔██╗{Style.RESET_ALL}\n{Fore.CYAN}██║    ██║██████╗ ██████╗██║    ██████╗╚██████╔╝██╔╝ ██╗{Style.RESET_ALL}\n{Fore.YELLOW}╚═╝    ╚═╝╚═════╝ ╚═════╝╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═╝{Style.RESET_ALL}\n"
     print(logo)
 # argparser
 def main():
@@ -152,9 +188,22 @@ def main():
     ar=sub.add_parser('archive');ar.add_argument('src');ar.add_argument('dst')
     ex=sub.add_parser('extract');ex.add_argument('src');ex.add_argument('dst')
     sr=sub.add_parser('search');sr.add_argument('--text');sr.add_argument('--ext');sr.add_argument('pattern',nargs='?');sr.add_argument('path',nargs='?',default=os.getcwd())
+    fz=sub.add_parser('fzf'); fz.add_argument('path', nargs='?', default='.')
     args,db=p.parse_args(),load_db()
+
+    # main logic
     if len(sys.argv)==1:show_logo();return
-    if args.help:show_logo(); print(f"{Fore.YELLOW}DESCRIPTION:{Style.RESET_ALL}\n• FileFlux is a modern CLI for managing files and paths.\n• Save and jump to frequently used paths.\n• Search text inside files with searchtext.\n• Find files by name with searchfile.\n• Password manager: 'ffx pass <alias> [password]'.\n• {Fore.GREEN}Author{Style.RESET_ALL}: {Fore.CYAN}{AUTHOR}{Style.RESET_ALL}\n• {Fore.GREEN}Version{Style.RESET_ALL}: {Fore.CYAN}{VERSION}{Style.RESET_ALL}\n• {Fore.GREEN}Repo{Style.RESET_ALL}: {Fore.CYAN}{REPO}{Style.RESET_ALL}\n"); p.print_help(); return
+    if args.help:show_logo(); print(f"{Fore.YELLOW}DESCRIPTION:{Style.RESET_ALL}\n"
+      f"• FileFlux is a sleek CLI tool to manage files, folders, and paths efficiently.\n"
+      f"• Quickly copy, move, delete, rename, or list files with rich info.\n"
+      f"• Save & jump to favorite paths to speed up navigation.\n"
+      f"• Search inside files or by filename.\n"
+      f"• Archive and extract files effortlessly.\n"
+      f"• Built-in password manager: 'ffx pass <alias> [password]'.\n"
+      f"• FUZZY SEARCH: Interactively find and select files with fallback terminal interface.\n"
+      f"• {Fore.GREEN}Author{Style.RESET_ALL}: {Fore.CYAN}{AUTHOR}{Style.RESET_ALL}\n"
+      f"• {Fore.GREEN}Version{Style.RESET_ALL}: {Fore.CYAN}{VERSION}{Style.RESET_ALL}\n"
+      f"• {Fore.GREEN}Repo{Style.RESET_ALL}: {Fore.CYAN}{REPO}{Style.RESET_ALL}\n");p.print_help(); return
     if args.cmd=='info':print(detect(args.file))
     elif args.cmd=='copy':copy(args.src,args.dst)
     elif args.cmd=='cut':cut(args.src,args.dst)
@@ -180,5 +229,7 @@ def main():
         res=search(args.path,text=args.text,ext=args.ext,pattern=args.pattern)
         if res:[print(r) for r in res]
         else:print('[NONE] No matches found')
+    elif args.cmd=='fzf': interactive_fuzzy(args.path)
     else:p.print_help()
+
 if __name__=="__main__":main()
