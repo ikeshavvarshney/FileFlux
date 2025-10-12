@@ -78,7 +78,39 @@ This guide helps you get **FileFlux** up and running on your system quickly.
    ```
    pip install colorama pyperclip
    ```
-3. Run FileFlux
+   
+3.  **Add PowerShell Function**
+
+   - Open your PowerShell profile script:
+      ```
+      powershell
+      notepad $PROFILE
+      ```
+   - If it doesn’t exist, create it first:
+      ```
+      New-Item -Path $PROFILE -ItemType File -Force
+      notepad $PROFILE
+      ```
+   - Then, add this function inside your profile:
+      ```
+      function ffx {
+         param([string]$cmd, [string]$arg1, [string]$arg2)
+         
+         if ($cmd -eq "jump") {
+            $path = python "C:\TOOLs\ffx.py" jump $arg1
+            if ($LASTEXITCODE -eq 0 -and (Test-Path $path)) {
+                  Set-Location $path
+            } else {
+                  Write-Host "❌ Alias path not found" -ForegroundColor Red
+            }
+         } else {
+            python "C:\TOOLs\ffx.py" $cmd $arg1 $arg2
+         }
+      }
+      ```
+   - That’s it! You can now run `jump` command
+
+4. Run FileFlux
    - Option 1 (basic): Run commands using Python:
      ```
      python ffx.py <command> [args]
@@ -87,4 +119,5 @@ This guide helps you get **FileFlux** up and running on your system quickly.
      ```
      ffx <command> [args]
      ```
+
 <p align='center'>"Efficiency is not about doing more, it's about doing it smarter."</p>  
